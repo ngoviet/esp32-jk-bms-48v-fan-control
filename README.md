@@ -214,7 +214,7 @@ This project is open source. Feel free to modify and distribute.
 ## 📞 Support
 
 - **Issues**: Open an issue on GitHub
-- **Email**: ngoducvietds@gmail.com
+- **Email**: vokupt@gmail.com
 - **ESPHome Docs**: https://esphome.io/
 
 <!-- support:start -->
