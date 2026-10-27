@@ -1,93 +1,93 @@
-# ESP32 Giám Sát BMS với Điều Khiển Quạt Tự Động
+# ESP32 JK-BMS 48V Monitor with Automatic Fan Control
 
-Cấu hình ESPHome để giám sát hệ thống quản lý pin JK-BMS với điều khiển quạt tự động dựa trên nhiệt độ từ Home Assistant.
+<!-- readme-axi type=esp32 -->
 
-## 🔋 Tính Năng
+**English** · [Tiếng Việt](README.vi.md)
 
-- **Giám Sát JK-BMS**: Giám sát toàn diện hệ thống pin LiFePO4 16S qua Modbus
-- **200+ Cảm Biến**: Điện áp cell, nhiệt độ, dòng điện, công suất, dung lượng, chu kỳ...
-- **Điều Khiển Quạt Tự Động**: Điều khiển quạt theo nhiệt độ với logic hysteresis
-- **Tích Hợp Home Assistant**: Kết nối trực tiếp qua ESPHome API
-- **Hỗ Trợ Đa Board**: Cấu hình cho ESP32 và ESP32-C3 SuperMini
-- **Cấu Hình Bảo Mật**: Thông tin WiFi được lưu trong file riêng biệt
+An **ESPHome** configuration that monitors a **JK-BMS** battery management system (16S LiFePO4)
+over Modbus and drives a cooling fan automatically from a temperature reported by **Home
+Assistant**. Runs on an **ESP32 Dev Module** or an **ESP32-C3 SuperMini**.
 
-## 📋 Yêu Cầu Phần Cứng
+> 🇻🇳 Built and maintained by one person in Việt Nam — if it saves you time, please
+> [support the project](#support-the-project).
 
-### Cấu Hình ESP32
+## Contents
+
+- [Features](#features)
+- [Hardware](#hardware)
+- [Quick start](#quick-start)
+- [Configuration](#configuration)
+- [How it works](#how-it-works)
+- [Home Assistant](#home-assistant)
+- [Troubleshooting](#troubleshooting)
+- [Project layout](#project-layout)
+- [Development](#development)
+
+## Features
+
+- **JK-BMS monitoring**: full monitoring of a 16S LiFePO4 battery system over Modbus
+- **200+ sensors**: cell voltages, temperatures, current, power, capacity, cycles...
+- **Automatic fan control**: temperature-based fan control with hysteresis logic
+- **Home Assistant integration**: direct connection through the ESPHome API
+- **Multi-board support**: configurations for ESP32 and ESP32-C3 SuperMini
+- **Secure configuration**: WiFi credentials are kept in a separate file
+
+## Hardware
+
+### ESP32 configuration
+
 - **Board**: ESP32 Dev Module
-- **Chân UART**: GPIO16 (TX), GPIO17 (RX) 
-- **Chân Quạt**: GPIO25 (PWM)
+- **UART pins**: GPIO16 (TX), GPIO17 (RX)
+- **Fan pin**: GPIO25 (PWM)
 - **Framework**: ESP-IDF
 
-### Cấu Hình ESP32-C3 SuperMini  
+### ESP32-C3 SuperMini configuration
+
 - **Board**: ESP32-C3-DevKitM-1
-- **Chân UART**: GPIO21 (TX), GPIO20 (RX)
-- **Chân Quạt**: GPIO10
+- **UART pins**: GPIO21 (TX), GPIO20 (RX)
+- **Fan pin**: GPIO10
 - **Framework**: ESP-IDF
 
-### Kết Nối JK-BMS
-- **Giao Thức**: Modbus RTU qua UART
-- **Tốc Độ**: 115200 baud
-- **Địa Chỉ Thiết Bị**: 0x09
-- **Tần Suất Cập Nhật**: 5-10 giây
+### JK-BMS connection
 
-## 🚀 Bắt Đầu Nhanh
+- **Protocol**: Modbus RTU over UART
+- **Speed**: 115200 baud
+- **Device address**: 0x09
+- **Update interval**: 5-10 seconds
 
-### 1. Tải Repository
+## Quick start
+
+### 1. Get the repository
+
 ```bash
-git clone https://github.com/ngoviet/esp32_doc_pin_48v.git
-cd esp32_doc_pin_48v
+git clone https://github.com/ngoviet/esp32-jk-bms-48v-fan-control.git
+cd esp32-jk-bms-48v-fan-control
 ```
 
-### 2. Thiết Lập Secrets
-Sao chép và chỉnh sửa file secrets:
+### 2. Set up secrets
+
+Copy and edit the secrets file:
+
 ```bash
 cp secrets.yaml.example secrets.yaml
-# Chỉnh sửa secrets.yaml với thông tin WiFi của bạn
+# Edit secrets.yaml with your WiFi details
 ```
 
-### 3. Flash Firmware
+### 3. Flash the firmware
+
 ```bash
-# Cho ESP32-C3
+# For ESP32-C3
 esphome run esp32-c3-bms-monitor.yaml
 
-# Hoặc dùng file batch
-flash-c3.bat  # Flash qua USB
-log.bat       # Xem logs
+# Or use the batch files
+flash-c3.bat  # Flash over USB
+log.bat       # View logs
 ```
 
-## 📁 Cấu Trúc File
+## Configuration
 
-```
-├── esp32-c3-bms-monitor.yaml    # Cấu hình chính ESP32-C3
-├── base-setup.yaml              # Các thành phần ESPHome cơ bản
-├── fan-control.yaml             # Logic điều khiển quạt
-├── secrets.yaml                 # Thông tin WiFi (đã gitignore)
-├── flash-c3.bat                 # Script flash
-├── log.bat                      # Script xem log
-└── .gitignore                   # File git ignore
-```
+### Fan settings
 
-## 🌡️ Logic Điều Khiển Quạt
-
-Hệ thống quạt tự động điều khiển làm mát dựa trên nhiệt độ từ Home Assistant:
-
-### Chế Độ Tự Động (Mặc Định)
-- **Bật Quạt**: Khi nhiệt độ ≥ T_HIGH (mặc định: 42°C)
-- **Tắt Quạt**: Khi nhiệt độ < T_LOW (mặc định: 41°C)  
-- **Hysteresis**: Ngăn chặn bật/tắt liên tục
-
-### Chế Độ Thủ Công
-- Ghi đè điều khiển tự động
-- Điều khiển bật/tắt trực tiếp
-
-### Nguồn Nhiệt Độ
-- **Chính**: `sensor.device_h240909079_device_temperature` từ Home Assistant
-- **Dự Phòng**: Không có (quạt tắt nếu không có dữ liệu để đảm bảo an toàn)
-
-## 🔧 Configuration
-
-### Fan Settings
 ```yaml
 substitutions:
   fan_pin: GPIO10                    # Fan control pin
@@ -95,127 +95,170 @@ substitutions:
   FAN_THR_LO_DEFAULT: "41.0"        # Auto OFF threshold
 ```
 
-### BMS Settings
+### BMS settings
+
 ```yaml
 substitutions:
-  device_addr: "9"                   # Địa chỉ Modbus BMS
-  tx_pin: GPIO21                     # Chân TX UART  
-  rx_pin: GPIO20                     # Chân RX UART
+  device_addr: "9"                   # BMS Modbus address
+  tx_pin: GPIO21                     # UART TX pin
+  rx_pin: GPIO20                     # UART RX pin
   modbus_controller_update_interval: "10s"
 ```
 
-### Thiết Lập WiFi (secrets.yaml)
+### WiFi setup (secrets.yaml)
+
 ```yaml
 wifi_ssid: "Ten_WiFi_Cua_Ban"
 wifi_password: "Mat_Khau_WiFi_Cua_Ban"
-wifi_bssid: "aa:bb:cc:dd:ee:ff"    # Tùy chọn: AP cụ thể
-wifi_channel: 11                    # Tùy chọn: kênh cụ thể
+wifi_bssid: "aa:bb:cc:dd:ee:ff"    # Optional: specific AP
+wifi_channel: 11                    # Optional: specific channel
 ```
 
-## 📊 Các Cảm Biến Có Sẵn
+### Security
 
-### Giám Sát Pin
-- Điện áp tế bào (1-16): Giám sát điện áp từng tế bào riêng lẻ
-- Điện áp gói pin: Tổng điện áp của gói pin
-- Dòng điện: Dòng sạc/xả có hướng
-- Công suất: Tiêu thụ/phát điện thời gian thực
-- SOC: Phần trăm mức sạc
-- SOH: Phần trăm tình trạng sức khỏe pin
+- **Secrets management**: WiFi credentials are stored separately
+- **Git protection**: `.gitignore` keeps sensitive information from leaking
+- **OTA protection**: optional password protection for updates
+- **API encryption**: optional encryption of API communication
 
-### Giám Sát Nhiệt Độ  
-- Nhiệt độ MOSFET: Linh kiện chuyển mạch công suất
-- Nhiệt độ pin: Nhiều đầu dò nhiệt độ
-- Nhiệt độ môi trường: Giám sát môi trường
+## How it works
 
-### Bảo Vệ & Trạng Thái
-- Cài đặt bảo vệ quá áp/thiếu áp
-- Cài đặt bảo vệ quá dòng
-- Giới hạn bảo vệ nhiệt độ
-- Trạng thái và dòng cân bằng
-- Trạng thái sạc/xả
-- Điều kiện báo động và mã lỗi
+The fan system controls cooling automatically from a temperature provided by Home Assistant:
 
-## 🔗 Tích Hợp Home Assistant
+### Automatic mode (default)
 
-### Thực Thể Được Tạo
-- **200+ cảm biến**: Tất cả thông số BMS
-- **Điều khiển quạt**: Chế độ tự động/thủ công, ngưỡng nhiệt
-- **Cảm biến nhị phân**: Trạng thái sạc, xả, cân bằng
-- **Chẩn đoán**: Tín hiệu WiFi, địa chỉ IP, thông tin thiết bị
+- **Fan on**: when temperature ≥ T_HIGH (default: 42°C)
+- **Fan off**: when temperature < T_LOW (default: 41°C)
+- **Hysteresis**: prevents rapid on/off cycling
 
-### Cards Dashboard
+### Manual mode
+
+- Overrides the automatic control
+- Direct on/off control
+
+### Temperature source
+
+- **Primary**: `sensor.device_h240909079_device_temperature` from Home Assistant
+- **Fallback**: none (the fan turns off when there is no data, for safety)
+
+## Home Assistant
+
+### Entities created
+
+- **200+ sensors**: every BMS parameter
+- **Fan control**: auto/manual mode, temperature thresholds
+- **Binary sensors**: charging, discharging, balancing state
+- **Diagnostics**: WiFi signal, IP address, device information
+
+### Available sensors
+
+#### Battery monitoring
+
+- Cell voltages (1-16): voltage of each individual cell
+- Pack voltage: total voltage of the battery pack
+- Current: directional charge/discharge current
+- Power: realtime consumption/generation
+- SOC: state of charge, in percent
+- SOH: state of health, in percent
+
+#### Temperature monitoring
+
+- MOSFET temperature: the power switching components
+- Battery temperature: several temperature probes
+- Ambient temperature: environment monitoring
+
+#### Protection & status
+
+- Over-voltage / under-voltage protection settings
+- Over-current protection settings
+- Temperature protection limits
+- Balancing state and balancing current
+- Charge/discharge state
+- Alarm conditions and error codes
+
+### Dashboard cards
+
 ```yaml
-# Ví dụ card điều khiển quạt
+# Example fan control card
 type: entities
 entities:
   - entity: switch.fan_auto_mode
-  - entity: switch.fan_manual_control  
+  - entity: switch.fan_manual_control
   - entity: number.fan_t_high_c
   - entity: number.fan_t_low_c
   - entity: sensor.temperature_sensor_1
 ```
 
-## 🛡️ Tính Năng Bảo Mật
+## Troubleshooting
 
-- **Quản Lý Secrets**: Thông tin WiFi được lưu riêng biệt
-- **Bảo Vệ Git**: `.gitignore` ngăn chặn lộ thông tin nhạy cảm
-- **Bảo Vệ OTA**: Tùy chọn bảo vệ mật khẩu cho cập nhật
-- **Mã Hóa API**: Tùy chọn mã hóa giao tiếp API
+### Common issues
 
-## 🐛 Khắc Phục Sự Cố
+**CRC check error**
 
-### Các Vấn Đề Thường Gặp
-
-**Lỗi Kiểm Tra CRC**
 ```
 [W][modbus:135]: Modbus CRC Check failed! 6C0!=603
 ```
-- Lỗi thỉnh thoảng do nhiễu điện bình thường
-- Không ảnh hưởng chức năng nếu vẫn nhận được dữ liệu
-- Cân nhắc thêm `send_wait_time: 50ms` để giảm tần suất
 
-**Không Có Dữ Liệu Nhiệt Độ**
+- Occasional errors from electrical noise are normal
+- No effect on functionality as long as data still arrives
+- Consider adding `send_wait_time: 50ms` to reduce how often it happens
+
+**No temperature data**
+
 ```
 [W][fan]: No temperature data available, turning fan OFF
 ```
-- Kiểm tra thực thể Home Assistant: `sensor.device_h240909079_device_temperature`
-- Xác minh ESPHome có thể kết nối với Home Assistant
-- Quạt sẽ an toàn TẮT cho đến khi có dữ liệu
 
-**Lỗi Compilation**
-- Đảm bảo tất cả tham chiếu `id:` khớp giữa các file
-- Kiểm tra thụt lề YAML (dùng space, không phải tab)
-- Xác minh phân công chân cho board cụ thể của bạn
+- Check the Home Assistant entity: `sensor.device_h240909079_device_temperature`
+- Verify that ESPHome can connect to Home Assistant
+- The fan stays safely OFF until data is available
 
-### Lệnh Debug
+**Compilation errors**
+
+- Make sure every `id:` reference matches across files
+- Check the YAML indentation (spaces, not tabs)
+- Verify the pin assignments for your specific board
+
+### Debug commands
+
 ```bash
-# Kiểm tra cấu hình
+# Validate the configuration
 esphome config esp32-c3-bms-monitor.yaml
 
-# Xem logs
+# View logs
 esphome logs esp32-c3-bms-monitor.yaml --device 192.168.x.x
 
-# Xóa build cache
+# Clear the build cache
 esphome clean esp32-c3-bms-monitor.yaml
 ```
 
-## 📝 License
+### Getting help
 
-This project is open source. Feel free to modify and distribute.
+- **Issues**: open an [issue](https://github.com/ngoviet/esp32-jk-bms-48v-fan-control/issues) on GitHub
+- **Email**: vokupt@gmail.com
+- **ESPHome Docs**: https://esphome.io/
 
-## 🤝 Contributing
+## Project layout
+
+```
+├── esp32-c3-bms-monitor.yaml    # Main ESP32-C3 configuration
+├── base-setup.yaml              # Basic ESPHome components
+├── fan-control.yaml             # Fan control logic
+├── secrets.yaml                 # WiFi credentials (gitignored)
+├── flash-c3.bat                 # Flash script
+├── log.bat                      # Log viewer script
+└── .gitignore                   # Git ignore file
+```
+
+## Development
+
+### Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## 📞 Support
-
-- **Issues**: Open an issue on GitHub
-- **Email**: vokupt@gmail.com
-- **ESPHome Docs**: https://esphome.io/
 
 <!-- support:start -->
 ## Support the project
@@ -234,9 +277,10 @@ This project is open source. Feel free to modify and distribute.
   <img src="https://raw.githubusercontent.com/ngoviet/.github/main/assets/support/vietqr-card.svg" width="300" alt="VietQR — MB Bank — NGO DUC VIET — 911051212">
 </p>
 
-<p align="center"><sub>🇻🇳 VietQR: quét bằng app ngân hàng bất kỳ, nội dung <code>Ung ho esp32-jk-bms-48v-fan-control</code>. Cảm ơn bạn! · Thank you for keeping this project alive.</sub></p>
+<p align="center"><sub>🇻🇳 VietQR: scan with any Vietnamese banking app, transfer note <code>Ung ho esp32-jk-bms-48v-fan-control</code>. Thank you for keeping this project alive!</sub></p>
+<p align="center"><sub>Crypto (BEP20 network): <code>0x57f07d44fb581cddc028a0c67d63a8cc05aa6caa</code> · USDT · USDC · BNB · ETH · BTC</sub></p>
 <!-- support:end -->
 
----
+## License
 
-**⚡ Built with ESPHome for reliable battery monitoring and smart fan control**
+[MIT](LICENSE) © Ngô Đức Việt.
